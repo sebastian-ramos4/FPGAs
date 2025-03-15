@@ -1,0 +1,80 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity FSM_Wack_A_Hex is
+    port (
+        clk_main    : in std_logic;    -- Entrada de reloj
+        reset       : in std_logic;    -- Botón de reinicio
+        push_L      : in std_logic;   -- Left Button
+        push_C      : in std_logic;   -- Center Button
+        push_R      : in std_logic;   -- Rigth Button
+        push_U      : in std_logic;   -- Up Button
+        push_D      : in std_logic;   -- Down Button
+    );
+end FSM_Wack_A_Hex;
+
+architecture behavioral of FSM_Wack_A_Hex is
+  type STATE is (INIT, IDLE, PLAYING, CURRENT_SCORE, PAUSE, MAX_SCORE, CHECK);
+  signal ACTUAL_STATE, NEXT_STATE : STATE;
+
+begin
+  process (clk_main, reset)
+  begin
+    if reset = '1' then
+       ACTUAL_STATE <= INIT;
+  	elsif rising_edge(clk_main) then
+  		ACTUAL_STATE <= NEXT_STATE;
+  	end if;
+    end process;
+  
+   process (ACTUAL_STATE, push_L, push_C, push_R, push_U, push_D, TIME, LIVES)
+   begin
+   	NEXT_STATE <= ACTUAL_STATE;
+   	case ACTUAL_STATE is
+   		when INIT =>
+  			NEXT_STATE <= IDLE;
+   		when IDLE =>
+   			if push_C = '1' then
+  				NEXT_STATE <= PLAYING;
+   			else
+   				NEXT_STATE <= IDLE;
+   			end if;
+  		when PLAYING =>
+   			if push_U = '1' then
+   				NEXT_STATE <= PAUSE;
+  			elsif push_D = '1' then
+   				NEXT_STATE <= CURRENT_SCORE;
+   			elsif push_C = '1' then
+   				NEXT_STATE <= CHECK;
+   			elsif TIME = 0 then
+   				NEXT_STATE <= CHECK;
+   			end if;
+   		when CURRENT_SCORE =>
+   			if TIME = 0 then
+   				NEXT_STATE <= PLAYING;
+   			elsif push_U = '1' then
+   				NEXT_STATE <= PAUSE;
+   			end if;
+   		when PAUSE =>
+   			if push_U = '1' then
+   				NEXT_STATE <= IDLE;
+   			elsif push_C = '1' then
+   				NEXT_STATE <= PLAYING;
+   			end if;
+   		when MAX_SCORE =>
+   			if TIME= 0 then
+   				NEXT_STATE <= PAUSE;
+   			end if;
+   		when CHECK =>
+  			if LIVES= 0 then
+   				NEXT_STATE <= IDLE;
+   			else
+   				NEXT_STATE <= PLAYING;
+   			end if;
+   		when others =>
+   			NEXT_STATE <= IDLE;
+   	end case;
+   end process;
+
+end behavioral;
