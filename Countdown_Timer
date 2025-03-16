@@ -1,0 +1,50 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity Countdown_Timer is
+    Port (
+        CLK       : in std_logic;  -- 100 Hz FPGA clock
+        RESET     : in std_logic;  -- Reset signal
+        WIN       : in std_logic;  -- Signal to increase speed
+        COUNT     : out integer range 0 to 20  -- Countdown value
+    );
+end Countdown_Timer;
+
+architecture Behavioral of Countdown_Timer is
+    signal clk_div      : integer := 100; -- Start at 1 Hz (100 clock cycles)
+    signal clk_count    : integer := 0;   -- Clock cycle counter
+    signal countdown    : integer range 0 to 20 := 20; -- 20-second countdown
+begin
+
+    process (CLK)
+    begin
+        if rising_edge(CLK) then
+            -- Clock Divider: Generate 1 Hz pulse (or faster after each win)
+            if clk_count >= clk_div then
+                clk_count <= 0;
+
+                -- Countdown decrement logic
+                if countdown > 0 then
+                    countdown <= countdown - 1;
+                end if;
+            else
+                clk_count <= clk_count + 1;
+            end if;
+        end if;
+    end process;
+
+    -- Speed up after a win (decrease clock division)
+    process (WIN)
+    begin
+        if rising_edge(WIN) then
+            if clk_div > 20 then  -- Limit how fast it gets
+                clk_div <= clk_div - 10;  -- Speed up
+            end if;
+        end if;
+    end process;
+
+    COUNT <= countdown;
+
+end Behavioral;
