@@ -1,0 +1,25 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+entity Debounce is 
+    Port (
+        DATA: in std_logic;
+        CLK : in std_logic;
+        OP_DATA : out std_logic
+    );
+end Debounce;
+
+architecture Behavioral of Debounce is
+    signal op1, op2, op3 : std_logic;
+begin
+    process(CLK)
+    begin
+        if rising_edge(CLK) then 
+            op1 <= DATA;
+            op2 <= op1;
+            op3 <= op2;
+        end if;
+    end process;
+
+    OP_DATA <= op1 and op2 and op3;
+end Behavioral;
