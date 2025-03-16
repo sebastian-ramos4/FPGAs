@@ -1,0 +1,51 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity Countdown_Display is
+    Port (
+        CLK       : in std_logic;  -- 100 Hz Clock
+        COUNT     : in integer range 0 to 20;  -- Countdown Value
+        SEG1      : out std_logic_vector(6 downto 0); -- 7-segment for tens place
+        SEG2      : out std_logic_vector(6 downto 0)  -- 7-segment for ones place
+    );
+end Countdown_Display;
+
+architecture Behavioral of Countdown_Display is
+    signal tens_digit : integer range 0 to 2; -- Tens place (0,1,2)
+    signal ones_digit : integer range 0 to 9; -- Ones place (0-9)
+    
+    -- 7-Segment Decoder Function
+    function BCD_to_7seg(bcd : integer) return std_logic_vector is
+        variable seg : std_logic_vector(6 downto 0);
+    begin
+        case bcd is
+            when 0 => seg := "0111111";  -- 0
+            when 1 => seg := "0000110";  -- 1
+            when 2 => seg := "1011011";  -- 2
+            when 3 => seg := "1001111";  -- 3
+            when 4 => seg := "1100110";  -- 4
+            when 5 => seg := "1101101";  -- 5
+            when 6 => seg := "1111101";  -- 6
+            when 7 => seg := "0000111";  -- 7
+            when 8 => seg := "1111111";  -- 8
+            when 9 => seg := "1101111";  -- 9
+            when others => seg := "0000000"; -- Default (Blank)
+        end case;
+        return seg;
+    end function;
+
+begin
+    process(COUNT)
+    begin
+        -- Convert COUNT to BCD
+        tens_digit <= COUNT / 10;
+        ones_digit <= COUNT mod 10;
+        
+        -- Assign segment outputs
+        SEG1 <= BCD_to_7seg(tens_digit);
+        SEG2 <= BCD_to_7seg(ones_digit);
+    end process;
+
+end Behavioral;
