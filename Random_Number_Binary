@@ -1,0 +1,33 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity Random_Number_Generator is
+    port (
+        clk_main : in std_logic;
+        reset : in std_logic;
+        enable_random : in std_logic;
+        random_number : out std_logic_vector (3 downto 0);
+    );
+end Random_Number_Generator;
+
+architecture behavioral of Random_Number_Generator is
+    signal counter : unsigned(3 downto 0) := "0000";
+begin
+  process (clk_main, reset)
+  begin
+      if reset = '1' then
+          counter <= "0000";
+      elsif rising_edge(clk_main) then
+        if counter = "1111" then
+            counter <= "0000";
+        else
+            counter <= counter + 1;
+        end if;
+
+        if enable_random = '1' then
+            random_number <= std_logic_vector(counter);
+        end if;
+      end if;
+  end process;
+end behavioral;
