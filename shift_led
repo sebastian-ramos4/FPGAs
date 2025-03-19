@@ -1,0 +1,67 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity LED_Shift is
+    Port ( clk     : in STD_LOGIC;   -- System clock
+           reset   : in STD_LOGIC;   -- Reset button
+           btnL    : in STD_LOGIC;   -- Raw Left button input
+           btnR    : in STD_LOGIC;   -- Raw Right button input
+           leds    : out STD_LOGIC_VECTOR(15 downto 0)  -- 16 LED outputs
+    );
+end LED_Shift;
+
+architecture Behavioral of LED_Shift is
+
+    -- Signals for debounced and registered button inputs
+    signal btnL_db, btnR_db : STD_LOGIC;
+    signal btnL_reg, btnR_reg : STD_LOGIC := '0';
+
+    -- Register to store LED states
+    signal led_reg : STD_LOGIC_VECTOR(15 downto 0) := "1000000000000000"; -- Start with LED16 ON
+    signal led_index : INTEGER range 0 to 15 := 15; -- Track active LED position (starts at 15)
+
+    -- Component declaration for debounce
+    component Debounce
+        Port ( DATA    : in  STD_LOGIC;
+               CLK     : in  STD_LOGIC;
+               OP_DATA : out STD_LOGIC);
+    end component;
+
+begin
+
+    -- Instantiate debounce modules for each button
+    Debounce_Left : Debounce port map(DATA => btnL, CLK => clk, OP_DATA => btnL_db);
+    Debounce_Right : Debounce port map(DATA => btnR, CLK => clk, OP_DATA => btnR_db);
+
+    -- Register debounced button inputs on the rising edge of the internal clock
+    process(clk)
+    begin
+        if rising_edge(clk) then
+            btnL_reg <= btnL_db;
+            btnR_reg <= btnR_db;
+        end if;
+    end process;
+
+    -- Process to shift LEDs and track current position
+    process(clk)
+    begin
+        if rising_edge(clk) then
+            if reset = '1' then
+                led_reg <= "1000000000000000"; -- Reset to LED16 ON
+                led_index <= 15; -- Reset index to 15
+            elsif btnL_reg = '1' and led_index > 0 then
+                led_reg <= led_reg(14 downto 0) & '0'; -- Shift left
+                led_index <= led_index - 1; -- Decrease index
+            elsif btnR_reg = '1' and led_index < 15 then
+                led_reg <= '0' & led_reg(15 downto 1); -- Shift right
+                led_index <= led_index + 1; -- Increase index
+            end if;
+        end if;
+    end process;
+
+    -- Assign output
+    leds <= led_reg;
+
+end Behavioral;
