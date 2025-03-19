@@ -1,0 +1,49 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity Debounce is
+    port (
+        clk    : in  std_logic;  -- Reloj principal de la FPGA
+        button : in  std_logic;  -- Botón con rebote
+        clean  : out std_logic   -- Señal filtrada sin rebote
+    );
+end Debounce;
+
+architecture Behavioral of Debounce is
+    -- Definir constantes (ajustadas a Basys 3)
+    constant CLK_FREQ   : integer := 100_000_000; -- Reloj de 100 MHz
+    constant DEBOUNCE_MS : integer := 10;        -- 10 ms de debounce
+    constant COUNT_MAX : integer := (CLK_FREQ / 1000) * DEBOUNCE_MS; -- Cantidad de ciclos de reloj
+
+    -- Señales internas
+    signal counter     : integer range 0 to COUNT_MAX := 0;
+    signal btn_sync_1, btn_sync_2 : std_logic := '0';
+    signal debounced   : std_logic := '0';
+begin
+    -- Aquí agregaremos la lógica del debounce
+  process (clk)
+  begin
+      if rising_edge(clk) then
+          btn_sync_1 <= button;  
+          btn_sync_2 <= btn_sync_1;  
+      end if;
+  end process;
+
+process (clk)
+begin
+    if rising_edge(clk) then
+        if btn_sync_2 = debounced then
+            if counter < COUNT_MAX then
+                counter <= counter + 1;  -- Incrementa el contador si la señal es estable
+            else
+                debounced <= btn_sync_2;  -- Confirma el cambio de estado
+            end if;
+        else
+            counter <= 0;  -- Reinicia si la señal cambia antes de estabilizarse
+        end if;
+    end if;
+  end process;
+
+  clean <= debounced; 
+end Behavioral;
