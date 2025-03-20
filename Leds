@@ -1,0 +1,38 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity LED_Controller is
+    port (
+        clk       : in  std_logic;  -- Reloj de la FPGA (100 MHz en Basys 3)
+        btn_right : in  std_logic;  -- Botón para mover a la derecha (con debounce)
+        btn_left  : in  std_logic;  -- Botón para mover a la izquierda (con debounce)
+        leds      : out std_logic_vector(15 downto 0)  -- Salida a los LEDs
+    );
+end LED_Controller;
+
+architecture Behavioral of LED_Controller is
+    signal led_position : integer range 0 to 15 := 0; -- Posición del LED activo
+    signal led_reg : std_logic_vector(15 downto 0) := (others => '0');
+begin
+
+  process (clk)
+    begin
+        if rising_edge(clk) then
+            if btn_right = '1' and led_position < 15 then
+                led_position <= led_position + 1;  -- Mover a la derecha
+            elsif btn_left = '1' and led_position > 0 then
+                led_position <= led_position - 1;  -- Mover a la izquierda
+            end if;
+        end if;
+    end process;
+
+    process (led_position)
+    begin
+        led_reg <= (others => '0');  -- Apagar todos los LEDs
+        led_reg(led_position) <= '1';  -- Encender el LED en la nueva posición
+    end process;
+
+    leds <= led_reg;
+
+end Behavioral;
