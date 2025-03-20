@@ -1,0 +1,44 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity Top_Module is
+    port (
+        clk       : in  std_logic;  -- Reloj principal de la FPGA
+        btn_right : in  std_logic;  -- Botón derecho (con rebote)
+        btn_left  : in  std_logic;  -- Botón izquierdo (con rebote)
+        leds      : out std_logic_vector(15 downto 0)  -- Salida a los LEDs
+    );
+end Top_Module;
+
+architecture Behavioral of Top_Module is
+    -- Señales para las salidas del debounce
+    signal clean_right, clean_left : std_logic;
+
+begin
+    -- Instancia del módulo de debounce para el botón derecho
+    Debounce_Right: entity work.Debounce
+        port map (
+            clk    => clk,
+            button => btn_right,
+            clean  => clean_right
+        );
+
+    -- Instancia del módulo de debounce para el botón izquierdo
+    Debounce_Left: entity work.Debounce
+        port map (
+            clk    => clk,
+            button => btn_left,
+            clean  => clean_left
+        );
+
+    -- Instancia del módulo de control de LEDs
+    LED_Control: entity work.LED_Controller
+        port map (
+            clk       => clk,
+            btn_right => clean_right, -- Botón derecho con debounce
+            btn_left  => clean_left,  -- Botón izquierdo con debounce
+            leds      => leds
+        );
+
+end Behavioral;
